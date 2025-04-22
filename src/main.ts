@@ -16,10 +16,12 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: allowedOrigin, 
-    credentials: true, 
+    origin: allowedOrigin,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Authorization'],
+    maxAge: 3600,
   });
 
   app.use(helmet({
