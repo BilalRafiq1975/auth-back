@@ -1,15 +1,23 @@
 import { config } from 'dotenv';
-config(); // ✅ Load env variables
+config(); // Load env variables
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { Logger } from '@nestjs/common';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
+
+  // Get the reflector instance
+  const reflector = app.get(Reflector);
+
+  // Set up global JWT authentication
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   const allowedOrigins = [
     'https://auth-front-ruby.vercel.app',
