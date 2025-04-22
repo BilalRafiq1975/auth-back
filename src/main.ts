@@ -1,5 +1,5 @@
-import { config } from 'dotenv'; 
-config();
+import { config } from 'dotenv';
+config(); // ✅ Load env variables
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -9,28 +9,17 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  
-  console.log('Frontend URL:', process.env.FRONTEND_URL);
+  const allowedOrigin = process.env.FRONTEND_URL;
+
+  if (!allowedOrigin) {
+    throw new Error('FRONTEND_URL not set in .env');
+  }
 
   app.enableCors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'http://localhost:3000',
-        'https://auth-front-ruby.vercel.app'
-      ];
-
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.error('❌ Blocked by CORS:', origin);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'],
+    origin: allowedOrigin, 
+    credentials: true, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    maxAge: 3600,
   });
 
   app.use(helmet({
@@ -45,5 +34,6 @@ async function bootstrap() {
   }));
 
   await app.listen(process.env.PORT || 4000);
+  console.log(`Server running on port ${process.env.PORT || 4000}`);
 }
 bootstrap();
