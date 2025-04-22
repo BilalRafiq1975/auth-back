@@ -16,7 +16,27 @@ async function bootstrap() {
     throw new Error('FRONTEND_URL not set in .env');
   }
 
-  // Custom CORS middleware
+  // Remove the default CORS configuration
+  app.enableCors({
+    origin: allowedOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers'
+    ],
+    exposedHeaders: ['Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    maxAge: 3600,
+  });
+
+  // Add middleware to handle CORS headers
   app.use((req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', allowedOrigin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
@@ -31,9 +51,11 @@ async function bootstrap() {
     next();
   });
 
+  // Configure Helmet with CORS-friendly settings
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   }));
 
   app.useGlobalPipes(new ValidationPipe({
