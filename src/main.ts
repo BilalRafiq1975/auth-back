@@ -8,7 +8,11 @@ async function bootstrap() {
   
   // Enable CORS with secure defaults
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'https://auth-front-ruby.vercel.app'
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -16,7 +20,10 @@ async function bootstrap() {
   });
 
   // Enable Helmet for security headers
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+  }));
 
   // Enable global validation pipe
   app.useGlobalPipes(new ValidationPipe({
