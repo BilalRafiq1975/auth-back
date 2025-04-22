@@ -21,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any): Promise<any> {
-    console.log("✅ Validate Function::", payload); // <-- This logs every time JWT is validated
+    console.log("Validate Function::", payload); 
 
     const user = await this.usersService.findOneByEmail(payload.email); 
 
