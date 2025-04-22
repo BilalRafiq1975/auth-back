@@ -18,6 +18,10 @@ export class UsersService {
     return await this.userModel.findOne({ email }).exec();
   }
 
+  async findOneByEmail(email: string): Promise<User | null> {
+    return this.userModel.findOne({ email }).exec();
+  }
+  
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.findOne(email);
     if (user && (await bcrypt.compare(password, user.password))) {

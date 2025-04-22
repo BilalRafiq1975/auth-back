@@ -1,25 +1,34 @@
 // jwt.strategy.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { User } from '../users/user.schema';
 import { UsersService } from '../users/users.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private usersService: UsersService) {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+  ) {
+    const jwtSecret = configService.getOrThrow<string>('JWT_SECRET');
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'Asdfghjklpoiuytrewq1975@',
+      secretOrKey: jwtSecret,
     });
   }
 
   async validate(payload: any): Promise<any> {
-    const user = await this.usersService.findOne(payload.email);
+    console.log("✅ Validate Function::", payload); // <-- This logs every time JWT is validated
+
+    const user = await this.usersService.findOneByEmail(payload.email); 
+
     if (!user) {
-      return null;
+      throw new UnauthorizedException('User not found');
     }
+
     const { password, ...result } = user.toObject();
     return result;
   }
