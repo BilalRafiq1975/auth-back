@@ -11,16 +11,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
-  const allowedOrigin = process.env.FRONTEND_URL;
-  logger.log(`Configuring CORS for origin: ${allowedOrigin}`);
+  const allowedOrigins = [
+    'https://auth-front-ruby.vercel.app',
+    'http://localhost:5173', // For local development
+  ];
 
-  if (!allowedOrigin) {
-    throw new Error('FRONTEND_URL not set in .env');
-  }
+  logger.log(`Configuring CORS for origins: ${allowedOrigins.join(', ')}`);
 
   // Configure CORS with proper credentials support
   app.enableCors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -54,6 +60,6 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
   logger.log(`Server running on port ${port}`);
-  logger.log(`CORS configured for origin: ${allowedOrigin}`);
+  logger.log(`CORS configured for origins: ${allowedOrigins.join(', ')}`);
 }
 bootstrap();
