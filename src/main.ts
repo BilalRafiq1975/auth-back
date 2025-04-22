@@ -5,32 +5,45 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+
+  console.log('Frontend URL:', process.env.FRONTEND_URL);
+
   
-  // Enable CORS with secure defaults
   app.enableCors({
-    origin: [
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-      'https://auth-front-ruby.vercel.app'
-    ],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL, 
+        'http://localhost:3000', 
+        'https://auth-front-ruby.vercel.app' 
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.error(' Blocked by CORS:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    maxAge: 3600, // 1 hour
+    maxAge: 3600,
   });
 
-  // Enable Helmet for security headers
+  
   app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginEmbedderPolicy: false,
   }));
 
-  // Enable global validation pipe
+  
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
   }));
+
   
   await app.listen(process.env.PORT || 4000);
 }
