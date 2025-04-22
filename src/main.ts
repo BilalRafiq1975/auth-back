@@ -5,11 +5,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const logger = new Logger('Bootstrap');
 
   const allowedOrigin = process.env.FRONTEND_URL;
+  logger.log(`Configuring CORS for origin: ${allowedOrigin}`);
 
   if (!allowedOrigin) {
     throw new Error('FRONTEND_URL not set in .env');
@@ -48,7 +51,9 @@ async function bootstrap() {
     transform: true,
   }));
 
-  await app.listen(process.env.PORT || 4000);
-  console.log(`Server running on port ${process.env.PORT || 4000}`);
+  const port = process.env.PORT || 4000;
+  await app.listen(port);
+  logger.log(`Server running on port ${port}`);
+  logger.log(`CORS configured for origin: ${allowedOrigin}`);
 }
 bootstrap();
