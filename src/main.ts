@@ -5,7 +5,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
-import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +15,7 @@ async function bootstrap() {
     throw new Error('FRONTEND_URL not set in .env');
   }
 
-  // Remove the default CORS configuration
+  // Configure CORS with proper credentials support
   app.enableCors({
     origin: allowedOrigin,
     credentials: true,
@@ -34,21 +33,6 @@ async function bootstrap() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
     maxAge: 3600,
-  });
-
-  // Add middleware to handle CORS headers
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    res.header('Access-Control-Allow-Origin', allowedOrigin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '3600');
-
-    if (req.method === 'OPTIONS') {
-      return res.status(204).end();
-    }
-
-    next();
   });
 
   // Configure Helmet with CORS-friendly settings
