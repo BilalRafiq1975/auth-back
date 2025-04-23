@@ -17,28 +17,28 @@ async function bootstrap() {
   // Use JWT Guard globally
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
-
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
-
+  // Configure CORS
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || [];
   logger.log(`Configuring CORS for: ${allowedOrigins.join(', ')}`);
 
-  // Configure secure and flexible CORS
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // Allow Postman or server-side requests
-
-      try {
-        const hostname = new URL(origin).hostname;
-        const isAllowed = allowedOrigins.some((o) => new URL(o).hostname === hostname);
-        return isAllowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
-      } catch (err) {
-        return callback(new Error('Invalid Origin'));
+      if (!origin) {
+        // Allow non-browser requests (e.g., Postman, curl)
+        return callback(null, true);
       }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      logger.warn(`Blocked by CORS: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: process.env.CORS_METHODS?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: process.env.CORS_HEADERS?.split(',') || [
-      'Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'
+      'Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin',
     ],
     exposedHeaders: ['Authorization'],
     preflightContinue: false,
@@ -53,16 +53,16 @@ async function bootstrap() {
     crossOriginEmbedderPolicy: false,
   }));
 
-  // Request validation
+  // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
   }));
 
-  // Start server
+  // Start the server
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  logger.log(`🚀 Server running on port ${port}`);
+  logger.log(`Server running on port ${port}`);
 }
 bootstrap();
