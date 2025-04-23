@@ -1,50 +1,44 @@
 import { config } from 'dotenv';
-config(); // Load env variables
+config(); // Load .env variables
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import helmet from 'helmet';
-import { Logger } from '@nestjs/common';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import helmet from 'helmet';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
-  
   const reflector = app.get(Reflector);
 
- 
+  // Use JWT Guard globally
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
-  const allowedOrigins = [
-    'https://auth-front-ruby.vercel.app',
-    'http://localhost:5173', // For local development
-  ];
 
-  logger.log(`Configuring CORS for origins: ${allowedOrigins.join(', ')}`);
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
 
-  // Configure CORS with proper credentials support
+  logger.log(`Configuring CORS for: ${allowedOrigins.join(', ')}`);
+
+  // Configure secure and flexible CORS
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      if (!origin) return callback(null, true); // Allow Postman or server-side requests
+
+      try {
+        const hostname = new URL(origin).hostname;
+        const isAllowed = allowedOrigins.some((o) => new URL(o).hostname === hostname);
+        return isAllowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+      } catch (err) {
+        return callback(new Error('Invalid Origin'));
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-      'Origin',
-      'Access-Control-Request-Method',
-      'Access-Control-Request-Headers'
+    methods: process.env.CORS_METHODS?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: process.env.CORS_HEADERS?.split(',') || [
+      'Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'
     ],
     exposedHeaders: ['Authorization'],
     preflightContinue: false,
@@ -52,22 +46,23 @@ async function bootstrap() {
     maxAge: 3600,
   });
 
-  //Configure Helmet with CORS-friendly settings
+  // Secure headers via Helmet
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-    crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    crossOriginEmbedderPolicy: false,
   }));
 
+  // Request validation
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
   }));
 
+  // Start server
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  logger.log(`Server running on port ${port}`);
-  logger.log(`CORS configured for origins: ${allowedOrigins.join(', ')}`);
+  logger.log(`🚀 Server running on port ${port}`);
 }
 bootstrap();
