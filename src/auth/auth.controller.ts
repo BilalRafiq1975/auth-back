@@ -4,7 +4,7 @@ import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Throttle } from '@nestjs/throttler';
-import { Public } from './public.decorator';
+import { Public } from './decorator/public.decorator';
 
 @Controller('auth')
 export class AuthController {

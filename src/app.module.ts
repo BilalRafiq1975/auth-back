@@ -3,9 +3,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module'
+import { TodosModule } from './todos/todos.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TodoModule } from './todo/todo.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     AuthModule,
     UsersModule,
+    TodosModule,
+    TodoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
