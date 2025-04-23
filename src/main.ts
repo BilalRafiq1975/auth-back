@@ -37,33 +37,33 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    // allowedHeaders: [
-    //   'Content-Type',
-    //   'Authorization',
-    //   'X-Requested-With',
-    //   'Accept',
-    //   'Origin',
-    //   'Access-Control-Request-Method',
-    //   'Access-Control-Request-Headers'
-    // ],
-    // exposedHeaders: ['Authorization'],
-    // preflightContinue: false,
-    // optionsSuccessStatus: 204,
-    // maxAge: 3600,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers'
+    ],
+    exposedHeaders: ['Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    maxAge: 3600,
   });
 
-  // Configure Helmet with CORS-friendly settings
-  // app.use(helmet({
-  //   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  //   crossOriginEmbedderPolicy: false,
-  //   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-  // }));
+  //Configure Helmet with CORS-friendly settings
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  }));
 
-  // app.useGlobalPipes(new ValidationPipe({
-  //   whitelist: true,
-  //   forbidNonWhitelisted: true,
-  //   transform: true,
-  // }));
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
