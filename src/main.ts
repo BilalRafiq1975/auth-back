@@ -18,7 +18,11 @@ async function bootstrap() {
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   // CORS configuration
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || [];
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://auth-back-production.up.railway.app'
+  ];
   logger.log(`Configuring CORS for: ${allowedOrigins.join(', ')}`);
 
   app.enableCors({
@@ -35,10 +39,10 @@ async function bootstrap() {
       logger.warn(`Blocked by CORS: ${origin}`);
       return callback(new Error('Not allowed by CORS'));
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Include OPTIONS for preflight
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'], // Ensure correct headers
-    exposedHeaders: ['Authorization'], // Expose the Authorization header if needed
-    credentials: true, // Allow credentials (cookies, headers) to be sent
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Authorization'],
+    credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
     maxAge: 3600,
