@@ -17,14 +17,14 @@ async function bootstrap() {
   // Use JWT Guard globally
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
-  // Configure CORS
+  // CORS configuration
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || [];
   logger.log(`Configuring CORS for: ${allowedOrigins.join(', ')}`);
 
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin) {
-        // Allow non-browser requests (e.g., Postman, curl)
+        // Allow requests without an origin (e.g., Postman, curl)
         return callback(null, true);
       }
 
@@ -35,12 +35,10 @@ async function bootstrap() {
       logger.warn(`Blocked by CORS: ${origin}`);
       return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true,
-    methods: process.env.CORS_METHODS?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: process.env.CORS_HEADERS?.split(',') || [
-      'Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin',
-    ],
-    exposedHeaders: ['Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Include OPTIONS for preflight
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'], // Ensure correct headers
+    exposedHeaders: ['Authorization'], // Expose the Authorization header if needed
+    credentials: true, // Allow credentials (cookies, headers) to be sent
     preflightContinue: false,
     optionsSuccessStatus: 204,
     maxAge: 3600,
