@@ -15,16 +15,15 @@ async function bootstrap() {
   // Enable Cookie Parser
   app.use(cookieParser());
 
-  // Enable CORS for both local and production environments
+  // CORS setup
+  const allowedOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        'http://localhost:3000',
-        'https://auth-front-ruby.vercel.app',
-        process.env.FRONTEND_URL,
-      ].filter(Boolean);
-
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         logger.warn(`Blocked request from unauthorized origin: ${origin}`);
@@ -32,12 +31,12 @@ async function bootstrap() {
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    methods: (process.env.CORS_METHODS || 'GET,POST,PUT,DELETE,PATCH,OPTIONS').split(','),
+    allowedHeaders: (process.env.CORS_HEADERS || 'Content-Type,Authorization,Accept').split(','),
     exposedHeaders: ['Set-Cookie'],
   });
 
-  // Apply Helmet for security
+  // Helmet setup
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -49,23 +48,27 @@ async function bootstrap() {
           scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'https://auth-back-production.up.railway.app'],
+          connectSrc: [
+            "'self'",
+            'https://auth-back-production.up.railway.app',
+            ...((process.env.FRONTEND_URL?.split(',').map(url => url.trim())) || []),
+          ].filter((src): src is string => Boolean(src)),
         },
       },
     }),
   );
 
-  // Setup Swagger documentation
-  const config = new DocumentBuilder()
+  // Swagger setup
+  const swaggerConfig = new DocumentBuilder()
     .setTitle('Auth API')
     .setDescription('The authentication API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-docs', app, document);
 
-  // Apply Validation Pipe
+  // Global Validation Pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -83,4 +86,5 @@ async function bootstrap() {
   logger.log(`Server running at http://localhost:${port}`);
   logger.log(`API Documentation available at http://localhost:${port}/api-docs`);
 }
+
 bootstrap();
