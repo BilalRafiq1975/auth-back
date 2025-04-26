@@ -1,10 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Logger,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { TodosService } from './todos.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { GetUser } from '../auth/decorator/get-user.decorator';
 import { User } from '../users/user.schema';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard) // 🔐 Applies guard to all routes in this controller
 @Controller('todos')
 export class TodosController {
   private readonly logger = new Logger(TodosController.name);
@@ -12,10 +25,7 @@ export class TodosController {
   constructor(private readonly todosService: TodosService) {}
 
   @Post()
-  async create(
-    @Body() createTodoDto: CreateTodoDto,
-    @GetUser() user: User,
-  ) {
+  async create(@Body() createTodoDto: CreateTodoDto, @GetUser() user: User) {
     if (!user) {
       this.logger.error('No user found in request');
       throw new UnauthorizedException('User not authenticated');
@@ -41,10 +51,7 @@ export class TodosController {
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-    @GetUser() user: User,
-  ) {
+  async findOne(@Param('id') id: string, @GetUser() user: User) {
     if (!user) {
       this.logger.error('No user found in request');
       throw new UnauthorizedException('User not authenticated');
@@ -74,10 +81,7 @@ export class TodosController {
   }
 
   @Delete(':id')
-  async remove(
-    @Param('id') id: string,
-    @GetUser() user: User,
-  ) {
+  async remove(@Param('id') id: string, @GetUser() user: User) {
     if (!user) {
       this.logger.error('No user found in request');
       throw new UnauthorizedException('User not authenticated');
@@ -88,4 +92,4 @@ export class TodosController {
     this.logger.log(`Todo deleted: ${id} for user ${user._id}`);
     return { message: 'Todo deleted successfully' };
   }
-} 
+}

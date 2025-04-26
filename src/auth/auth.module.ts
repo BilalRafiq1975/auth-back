@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
+    AuthModule,
     UsersModule,
     PassportModule,
     ThrottlerModule.forRoot({

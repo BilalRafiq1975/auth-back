@@ -24,7 +24,6 @@ export class AuthService {
     const userObject = user.toObject ? user.toObject() : user;
     const { password, ...userWithoutPassword } = userObject;
     return {
-      access_token: this.jwtService.sign(payload),
       user: {
         id: userWithoutPassword._id,
         name: userWithoutPassword.name,
