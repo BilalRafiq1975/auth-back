@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../users/users.service';
@@ -6,6 +6,8 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
@@ -14,7 +16,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request) => {
           const token = request?.cookies?.token;
-          console.log('Extracted Token from Cookies:', token); // Debug log
+          if (!token) {
+            this.logger.debug('No token found in cookies');
+          }
           return token;
         },
       ]),
@@ -24,17 +28,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log('JWT Payload:', payload);
+    try {
+      this.logger.debug(`Validating JWT payload for email: ${payload.email}`);
 
-    const user = await this.usersService.findOneByEmail(payload.email);
+      if (!payload.email || !payload.sub) {
+        this.logger.error('Invalid JWT payload structure');
+        throw new UnauthorizedException('Invalid token payload');
+      }
 
-    if (!user) {
-      console.log('User not found for email:', payload.email);
-      throw new UnauthorizedException('User not found');
+      const user = await this.usersService.findOneByEmail(payload.email);
+
+      if (!user) {
+        this.logger.warn(`User not found for email: ${payload.email}`);
+        throw new UnauthorizedException('User not found');
+      }
+
+      const { password, ...result } = user.toObject?.() || user;
+      this.logger.debug(`Successfully validated user: ${result.email}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`JWT validation error: ${error.message}`);
+      throw new UnauthorizedException('Invalid token');
     }
-
-    const { password, ...result } = user.toObject?.() || user;
-    console.log('Validated user:', result);
-    return result;
   }
 }
