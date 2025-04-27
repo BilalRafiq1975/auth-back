@@ -26,22 +26,25 @@ export class AuthController {
       createUserDto.email,
       createUserDto.name,
       createUserDto.password,
+      createUserDto.role
     );
 
     const payload = { email: user.email, sub: user._id, role: user.role };
     const token = this.jwtService.sign(payload);
 
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
       sameSite: 'none',
-      domain: '.railway.app',
+      domain: isProduction ? '.railway.app' : 'localhost',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.status(201).json({
       message: 'Registration successful',
       user,
+      token,
     });
   }
 
@@ -51,20 +54,23 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Header('Access-Control-Allow-Credentials', 'true')
   async login(@Request() req, @Response() res) {
-    const payload = { email: req.user.email, sub: req.user._id, role: req.user.role };
+    const user = req.user;
+    const payload = { email: user.email, sub: user._id, role: user.role };
     const token = this.jwtService.sign(payload);
 
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
       sameSite: 'none',
-      domain: '.railway.app',
+      domain: isProduction ? '.railway.app' : 'localhost',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.status(200).json({
       message: 'Login successful',
-      user: req.user,
+      user,
+      token,
     });
   }
 
@@ -81,11 +87,12 @@ export class AuthController {
   @Post('logout')
   @Header('Access-Control-Allow-Credentials', 'true')
   async logout(@Response() res) {
+    const isProduction = process.env.NODE_ENV === 'production';
     res.clearCookie('token', {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
       sameSite: 'none',
-      domain: '.railway.app',
+      domain: isProduction ? '.railway.app' : 'localhost',
     });
     return res.status(200).json({ message: 'Logout successful' });
   }

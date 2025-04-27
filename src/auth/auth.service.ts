@@ -26,10 +26,13 @@ export class AuthService {
       }
       
       this.logger.warn(`Invalid credentials for user: ${email}`);
-      return null;
+      throw new UnauthorizedException('Invalid credentials');
     } catch (error) {
       this.logger.error(`Error validating user: ${error.message}`);
-      throw new UnauthorizedException('Invalid credentials');
+      if (error.message.includes('deactivated')) {
+        throw new UnauthorizedException('Account has been deactivated. Please contact admin.');
+      }
+      throw error;
     }
   }
 
@@ -61,7 +64,7 @@ export class AuthService {
     }
   }
 
-  async register(email: string, name: string, password: string) {
+  async register(email: string, name: string, password: string, role: string = 'user') {
     try {
       this.logger.debug(`Processing registration for user: ${email}`);
       
@@ -72,7 +75,7 @@ export class AuthService {
         throw new ConflictException('Email already exists');
       }
 
-      const user = await this.usersService.create(email, name, password);
+      const user = await this.usersService.create(email, name, password, role);
       const { password: _, ...result } = user.toObject();
       
       this.logger.debug(`Registration successful for user: ${email}`);

@@ -16,14 +16,14 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // CORS setup
-  const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
     .split(',')
     .map(origin => origin.trim())
     .filter(Boolean);
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
         callback(null, true);
       } else {
         logger.warn(`Blocked request from unauthorized origin: ${origin}`);
@@ -34,6 +34,9 @@ async function bootstrap() {
     methods: (process.env.CORS_METHODS || 'GET,POST,PUT,DELETE,PATCH,OPTIONS').split(','),
     allowedHeaders: (process.env.CORS_HEADERS || 'Content-Type,Authorization,Accept').split(','),
     exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400, // 24 hours
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Helmet setup
