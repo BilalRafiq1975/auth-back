@@ -7,7 +7,6 @@ import { TodosModule } from './todos/todos.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TodoModule } from './todo/todo.module';
 
 @Module({
   imports: [
@@ -33,7 +32,6 @@ import { TodoModule } from './todo/todo.module';
     AuthModule,
     UsersModule,
     TodosModule,
-    TodoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

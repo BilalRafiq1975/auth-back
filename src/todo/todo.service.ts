@@ -1,26 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Todo } from './entities/todo.entity';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class TodoService {
-  create(createTodoDto: CreateTodoDto) {
-    return 'This action adds a new todo';
+  constructor(
+    @InjectModel(Todo.name) private readonly todoModel: Model<Todo>,
+  ) {}
+
+  async create(createTodoDto: CreateTodoDto) {
+    const createdTodo = new this.todoModel(createTodoDto);
+    return createdTodo.save();
   }
 
-  findAll(user: any) {
-    return `This action returns all todo ${user.id}`;
+  async findAll(user: any) {
+    try {
+      if (!user || !user._id) {
+        throw new Error('Invalid user object');
+      }
+      return this.todoModel.find({ userId: user._id }).exec();
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} todo`;
+  async findOne(id: string) {
+    return this.todoModel.findById(id).exec();
   }
 
-  update(id: number, updateTodoDto: UpdateTodoDto) {
-    return `This action updates a #${id} todo`;
+  async update(id: string, updateTodoDto: UpdateTodoDto) {
+    return this.todoModel.findByIdAndUpdate(id, updateTodoDto, { new: true }).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} todo`;
+  async remove(id: string) {
+    return this.todoModel.findByIdAndDelete(id).exec();
   }
 }
